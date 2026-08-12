@@ -187,8 +187,7 @@ function App() {
       <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
         <div className="brand" onClick={() => setView('home')} role="button" tabIndex={0}>
           <div className="brand-mark"><img src="/Logo_academie.jpg" alt="Logo Galaxie" /></div>
-          <div><strong>Galaxie</strong></div>
-          <span className="brand-subtitle">Saint Koff</span>
+          <div><strong>Galaxie</strong><span style={{color: '#d7f04a', fontSize: '12px'}}>Saint Koff</span></div>
         </div>
         <div className="workspace-label">ESPACE EXPLORATION</div>
         <nav className="side-nav">

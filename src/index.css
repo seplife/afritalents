@@ -25,7 +25,6 @@ button { cursor: pointer; }
 .soon { background: transparent; color: #596258; font-size: 9px; }
 .dot, .notification-dot { width: 6px; height: 6px; background: var(--orange); border-radius: 50%; margin-left: auto; }
 .sidebar-bottom { margin-top: auto; display: grid; gap: 18px; }
-.brand-subtitle { color: #d7f04a;}
 .verification-card { display: flex; gap: 10px; padding: 13px 12px; background: #20251f; border: 1px solid #313b2e; border-radius: 10px; color: var(--lime); }
 .verification-card strong, .verification-card span { display: block; } .verification-card strong { font-size: 10px; color: #d8e0d3; } .verification-card span { font-size: 9px; color: #7e8a79; margin-top: 4px; }
 .user-mini { display: flex; gap: 9px; align-items: center; padding: 0 7px; } .user-mini > div:nth-child(2) { flex: 1; } .user-mini strong, .user-mini span { display: block; } .user-mini strong { font-size: 11px; } .user-mini span { font-size: 9px; color: var(--muted); margin-top: 3px; }
