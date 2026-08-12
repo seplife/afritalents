@@ -186,8 +186,9 @@ function App() {
     <div className="app-shell">
       <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
         <div className="brand" onClick={() => setView('home')} role="button" tabIndex={0}>
-          <div className="brand-mark"><img src="/Logo_academie.jpg" alt="Logo AfriTalents" /></div>
-          <div><strong>AfriTalents</strong><span>Football intelligence</span></div>
+          <div className="brand-mark"><img src="/Logo_academie.jpg" alt="Logo Galaxie" /></div>
+          <div><strong>Galaxie</strong></div>
+          <span className="brand-subtitle">Saint Koff</span>
         </div>
         <div className="workspace-label">ESPACE EXPLORATION</div>
         <nav className="side-nav">
@@ -214,7 +215,7 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <button className="mobile-menu-button" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Ouvrir le menu"><Menu size={22} /></button>
-          <div className="breadcrumbs"><span>AfriTalents</span><span>/</span><strong>{view === 'home' ? 'Vue d’ensemble' : view === 'talents' ? 'Découvrir les talents' : view === 'profile' ? 'Profil joueur' : view === 'dashboard' ? 'Mon espace' : view === 'shortlists' ? 'Mes shortlists' : view === 'reports' ? 'Rapports scouting' : view === 'transfers' ? 'Transfer Center' : view === 'opportunities' ? 'Opportunités' : view === 'opportunity-detail' ? 'Détail de l’opportunité' : view === 'stats' ? 'Statistiques' : view === 'videos' ? 'Vidéothèque' : view === 'academic' ? 'Parcours académique' : view === 'messages' ? 'Messages' : 'Mon profil'}</strong></div>
+          <div className="breadcrumbs"><span>Galaxie Sant Koff</span><span>/</span><strong>{view === 'home' ? 'Vue d’ensemble' : view === 'talents' ? 'Découvrir les talents' : view === 'profile' ? 'Profil joueur' : view === 'dashboard' ? 'Mon espace' : view === 'shortlists' ? 'Mes shortlists' : view === 'reports' ? 'Rapports scouting' : view === 'transfers' ? 'Transfer Center' : view === 'opportunities' ? 'Opportunités' : view === 'opportunity-detail' ? 'Détail de l’opportunité' : view === 'stats' ? 'Statistiques' : view === 'videos' ? 'Vidéothèque' : view === 'academic' ? 'Parcours académique' : view === 'messages' ? 'Messages' : 'Mon profil'}</strong></div>
           <div className="topbar-actions"><button className="icon-button" onClick={() => showNotice('Vous êtes à jour.')} aria-label="Notifications"><Bell size={18} /><span className="notification-dot" /></button><button className="help-button" onClick={() => showNotice('Notre équipe vous répondra prochainement.')}>Besoin d’aide ?</button><div className="avatar avatar-dark">AF</div></div>
         </header>
 
