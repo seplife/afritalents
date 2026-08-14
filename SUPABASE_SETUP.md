@@ -157,14 +157,39 @@ compte académie) peut désormais :
 Toutes ces actions écrivent directement dans les tables `players`,
 `player_profiles` et `player_statistics` de votre projet Supabase.
 
-## 11. Démarrage local
+## 11. Aucune donnée de démonstration — base 100 % réelle
+
+Sur demande explicite, **toute donnée de démonstration a été retirée**, à la
+fois côté application et côté base de données :
+
+- Le tableau `DEMO_PLAYERS` codé en dur dans `src/App.tsx` a été supprimé.
+  L'application n'affiche plus que les joueurs réellement présents dans
+  Supabase — tant qu'aucun joueur n'est enregistré, les pages publiques
+  affichent un état vide honnête (« Aucun joueur enregistré ») plutôt que des
+  profils fictifs.
+- La migration ne crée plus automatiquement 4 joueurs et leurs académies : la
+  base reste strictement vide jusqu'à ce qu'un administrateur ou une académie
+  enregistre ses propres joueurs depuis **Administration > Gestion des
+  joueurs**.
+- Tous les chiffres de la page d'accueil (talents référencés, pays
+  représentés, académies partenaires, opportunités actives, score sportif
+  moyen, score académique moyen, « talent du moment ») sont désormais
+  **calculés en temps réel** à partir des données Supabase, et non plus
+  codés en dur.
+
+Après avoir appliqué les migrations sur un projet Supabase neuf, l'application
+démarrera donc avec une base de données vide : c'est normal et attendu.
+Ajoutez votre premier joueur depuis l'espace Administration pour voir les
+pages publiques se remplir.
+
+## 12. Démarrage local
 
 ```bash
 npm install
 npm run dev
 ```
 
-## 12. Build de production
+## 13. Build de production
 
 ```bash
 npm run build

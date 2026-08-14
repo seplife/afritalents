@@ -359,65 +359,7 @@ CREATE POLICY "Admin and academy can delete player videos" ON storage.objects FO
 
 ALTER TABLE players ADD COLUMN IF NOT EXISTS academic_score text;
 
--- 10. Données de démonstration (les 4 profils déjà visibles côté interface) -----
-
-DO $$
-DECLARE
-  org_afa uuid;
-  org_dep uuid;
-  org_afl uuid;
-  org_bng uuid;
-  p_id uuid;
-BEGIN
-  INSERT INTO organizations (name, type, country, city, verified)
-  VALUES ('Africa Future Academy', 'academy', 'Côte d''Ivoire', 'Abidjan', true)
-  ON CONFLICT DO NOTHING RETURNING id INTO org_afa;
-  IF org_afa IS NULL THEN SELECT id INTO org_afa FROM organizations WHERE name = 'Africa Future Academy' LIMIT 1; END IF;
-
-  INSERT INTO organizations (name, type, country, city, verified)
-  VALUES ('Dakar Elite Project', 'academy', 'Sénégal', 'Dakar', true)
-  ON CONFLICT DO NOTHING RETURNING id INTO org_dep;
-  IF org_dep IS NULL THEN SELECT id INTO org_dep FROM organizations WHERE name = 'Dakar Elite Project' LIMIT 1; END IF;
-
-  INSERT INTO organizations (name, type, country, city, verified)
-  VALUES ('Accra Football Lab', 'academy', 'Ghana', 'Accra', true)
-  ON CONFLICT DO NOTHING RETURNING id INTO org_afl;
-  IF org_afl IS NULL THEN SELECT id INTO org_afl FROM organizations WHERE name = 'Accra Football Lab' LIMIT 1; END IF;
-
-  INSERT INTO organizations (name, type, country, city, verified)
-  VALUES ('Bamako Next Gen', 'academy', 'Mali', 'Bamako', true)
-  ON CONFLICT DO NOTHING RETURNING id INTO org_bng;
-  IF org_bng IS NULL THEN SELECT id INTO org_bng FROM organizations WHERE name = 'Bamako Next Gen' LIMIT 1; END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM players WHERE first_name = 'Koffi' AND last_name = 'Jean') THEN
-    INSERT INTO players (first_name, last_name, country, primary_position, avatar_url, organization_id, height_cm, preferred_foot, status, visibility, academic_score, nationality)
-    VALUES ('Koffi', 'Jean', 'Côte d''Ivoire', 'Ailier droit', 'https://images.pexels.com/photos/8941656/pexels-photo-8941656.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', org_afa, 176, 'right', 'active', 'public', '14,7/20', 'Ivoirienne')
-    RETURNING id INTO p_id;
-    INSERT INTO player_profiles (player_id, technical_score, physical_score, potential_score) VALUES (p_id, 84, 80, 88);
-    INSERT INTO player_statistics (player_id, season, matches, goals, assists) VALUES (p_id, '2025/26', 28, 14, 9);
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM players WHERE first_name = 'Amara' AND last_name = 'Diallo') THEN
-    INSERT INTO players (first_name, last_name, country, primary_position, avatar_url, organization_id, height_cm, preferred_foot, status, visibility, academic_score, nationality)
-    VALUES ('Amara', 'Diallo', 'Sénégal', 'Milieu central', 'https://images.pexels.com/photos/30449603/pexels-photo-30449603.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', org_dep, 172, 'left', 'active', 'public', '15,2/20', 'Sénégalaise')
-    RETURNING id INTO p_id;
-    INSERT INTO player_profiles (player_id, technical_score, physical_score, potential_score) VALUES (p_id, 81, 76, 85);
-    INSERT INTO player_statistics (player_id, season, matches, goals, assists) VALUES (p_id, '2025/26', 25, 8, 13);
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM players WHERE first_name = 'Kwame' AND last_name = 'Mensah') THEN
-    INSERT INTO players (first_name, last_name, country, primary_position, avatar_url, organization_id, height_cm, preferred_foot, status, visibility, academic_score, nationality)
-    VALUES ('Kwame', 'Mensah', 'Ghana', 'Défenseur central', 'https://images.pexels.com/photos/33110007/pexels-photo-33110007.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', org_afl, 184, 'right', 'active', 'public', '13,9/20', 'Ghanéenne')
-    RETURNING id INTO p_id;
-    INSERT INTO player_profiles (player_id, technical_score, physical_score, potential_score) VALUES (p_id, 86, 88, 84);
-    INSERT INTO player_statistics (player_id, season, matches, goals, assists) VALUES (p_id, '2025/26', 31, 3, 4);
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM players WHERE first_name = 'Moussa' AND last_name = 'Traoré') THEN
-    INSERT INTO players (first_name, last_name, country, primary_position, avatar_url, organization_id, height_cm, preferred_foot, status, visibility, academic_score, nationality)
-    VALUES ('Moussa', 'Traoré', 'Mali', 'Attaquant', 'https://images.pexels.com/photos/31642262/pexels-photo-31642262.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', org_bng, 179, 'right', 'active', 'public', '12,8/20', 'Malienne')
-    RETURNING id INTO p_id;
-    INSERT INTO player_profiles (player_id, technical_score, physical_score, potential_score) VALUES (p_id, 88, 85, 90);
-    INSERT INTO player_statistics (player_id, season, matches, goals, assists) VALUES (p_id, '2025/26', 26, 19, 6);
-  END IF;
-END $$;
+-- Remarque : aucune donnée de démonstration n'est insérée par cette migration.
+-- La base reste vide jusqu'à ce qu'un administrateur ou une académie
+-- enregistre ses propres joueurs depuis l'espace Administration de
+-- l'application.
