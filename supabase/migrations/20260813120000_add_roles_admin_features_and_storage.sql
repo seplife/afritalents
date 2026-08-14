@@ -238,6 +238,34 @@ CREATE POLICY "Participants can send messages" ON messages FOR INSERT TO authent
   auth.uid() = sender_id AND EXISTS (SELECT 1 FROM conversation_participants cp WHERE cp.conversation_id = messages.conversation_id AND cp.user_id = auth.uid())
 );
 
+-- 6bis. Demandes de contact directes sur un joueur et alertes de recherche -------
+
+CREATE TABLE IF NOT EXISTS player_contact_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  player_id uuid NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  requester_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  message text,
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'answered', 'closed')),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS search_alerts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  query text,
+  position text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE player_contact_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE search_alerts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage their player contact requests" ON player_contact_requests;
+CREATE POLICY "Users manage their player contact requests" ON player_contact_requests FOR ALL TO authenticated USING (auth.uid() = requester_id OR is_admin_or_academy()) WITH CHECK (auth.uid() = requester_id);
+
+DROP POLICY IF EXISTS "Users manage their search alerts" ON search_alerts;
+CREATE POLICY "Users manage their search alerts" ON search_alerts FOR ALL TO authenticated USING (auth.uid() = owner_id) WITH CHECK (auth.uid() = owner_id);
+
 -- 7. Mise à jour des permissions d'écriture sur les tables joueurs pour les admins/académies --
 
 DROP POLICY IF EXISTS "Authenticated can create players" ON players;

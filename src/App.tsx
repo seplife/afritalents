@@ -23,7 +23,6 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  Star,
   Target,
   TrendingUp,
   Trophy,
@@ -66,6 +65,10 @@ type Player = {
   height: string;
   foot: string;
   sport: number;
+  technicalScore?: number | null;
+  tacticalScore?: number | null;
+  physicalScore?: number | null;
+  mentalScore?: number | null;
   academic: string;
   goals: number;
   assists: number;
@@ -197,6 +200,10 @@ function mapDbPlayerToPlayer(
     height: dbPlayer.height_cm ? `${(dbPlayer.height_cm / 100).toFixed(2).replace('.', ',')} m` : '—',
     foot: dbPlayer.preferred_foot === 'left' ? 'Gauche' : dbPlayer.preferred_foot === 'both' ? 'Ambidextre' : 'Droit',
     sport: sportScore || 75,
+    technicalScore: profileRow?.technical_score ?? null,
+    tacticalScore: profileRow?.tactical_score ?? null,
+    physicalScore: profileRow?.physical_score ?? null,
+    mentalScore: profileRow?.mental_score ?? null,
     academic: dbPlayer.academic_score ?? '—',
     goals: statsRow?.goals ?? 0,
     assists: statsRow?.assists ?? 0,
@@ -212,6 +219,8 @@ function App() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player>(DEMO_PLAYERS[0]);
   const [query, setQuery] = useState('');
   const [position, setPosition] = useState('Toutes les positions');
+  const [country, setCountry] = useState('Tous les pays');
+  const [sortBy, setSortBy] = useState<'potential' | 'name'>('potential');
   const [mobileMenu, setMobileMenu] = useState(false);
   const [notice, setNotice] = useState('');
   const [selectedOpportunity, setSelectedOpportunity] = useState<DbOpportunity | null>(null);
@@ -245,12 +254,16 @@ function App() {
   }, []);
 
   const filteredPlayers = useMemo(() => {
-    return players.filter((player) => {
+    const filtered = players.filter((player) => {
       const matchesQuery = `${player.name} ${player.country} ${player.academy} ${player.position}`.toLowerCase().includes(query.toLowerCase());
       const matchesPosition = position === 'Toutes les positions' || player.position === position;
-      return matchesQuery && matchesPosition;
+      const matchesCountry = country === 'Tous les pays' || player.country === country;
+      return matchesQuery && matchesPosition && matchesCountry;
     });
-  }, [players, position, query]);
+    return [...filtered].sort((a, b) => (sortBy === 'potential' ? b.sport - a.sport : a.name.localeCompare(b.name)));
+  }, [players, position, query, country, sortBy]);
+
+  const countryOptions = useMemo(() => ['Tous les pays', ...Array.from(new Set(players.map((p) => p.country)))], [players]);
 
   const goToProfile = (player: Player) => {
     setSelectedPlayer(player);
@@ -319,12 +332,12 @@ function App() {
         </header>
 
         {view === 'home' && <Home players={players} onExplore={() => setView('talents')} onProfile={() => goToProfile(players[0])} onAcademy={() => setView('academy')} onNotice={showNotice} />}
-        {view === 'talents' && <TalentExplorer query={query} setQuery={setQuery} position={position} setPosition={setPosition} players={filteredPlayers} onProfile={goToProfile} onNotice={showNotice} />}
+        {view === 'talents' && <TalentExplorer query={query} setQuery={setQuery} position={position} setPosition={setPosition} country={country} setCountry={setCountry} countryOptions={countryOptions} sortBy={sortBy} setSortBy={setSortBy} players={filteredPlayers} totalCount={players.length} onProfile={goToProfile} onNotice={showNotice} />}
         {view === 'profile' && <PlayerProfile player={selectedPlayer} onBack={() => setView('talents')} onNotice={showNotice} onTab={(tab) => setView(tab)} />}
-        {view === 'stats' && <PlayerStats player={selectedPlayer} onBack={() => setView('profile')} onNotice={showNotice} />}
+        {view === 'stats' && <PlayerStats player={selectedPlayer} onBack={() => setView('profile')} />}
         {view === 'videos' && <VideoLibrary player={selectedPlayer} onBack={() => setView('profile')} onNotice={showNotice} />}
         {view === 'academic' && <AcademicPath player={selectedPlayer} onBack={() => setView('profile')} onNotice={showNotice} />}
-        {view === 'dashboard' && <Dashboard players={players} onExplore={() => setView('talents')} onNotice={showNotice} />}
+        {view === 'dashboard' && <Dashboard players={players} onExplore={() => setView('talents')} onNavigate={setView} />}
         {view === 'shortlists' && <ShortlistsPanel onNotice={showNotice} />}
         {view === 'reports' && <ReportsPanel onNotice={showNotice} />}
         {view === 'transfers' && <TransfersPanel onNotice={showNotice} />}
@@ -361,8 +374,76 @@ function Home({ players, onExplore, onProfile, onAcademy, onNotice }: { players:
   </div>;
 }
 
-function TalentExplorer({ query, setQuery, position, setPosition, players, onProfile, onNotice }: { query: string; setQuery: (value: string) => void; position: string; setPosition: (value: string) => void; players: Player[]; onProfile: (player: Player) => void; onNotice: (message: string) => void }) {
-  return <div className="page explorer-page"><div className="page-intro"><div><div className="eyebrow">Base de talents</div><h1>Découvrir les talents</h1><p>Explorez les profils qui façonnent le prochain chapitre du football africain.</p></div><button className="button button-primary" onClick={() => onNotice('Votre alerte de nouveaux talents est activée.')}><SlidersHorizontal size={17} /> Enregistrer une alerte</button></div><div className="explorer-toolbar"><div className="search-field"><Search size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher un nom, une académie, un pays..." /></div><div className="select-field"><Filter size={16} /><select value={position} onChange={(event) => setPosition(event.target.value)}><option>Toutes les positions</option><option>Ailier droit</option><option>Milieu central</option><option>Défenseur central</option><option>Attaquant</option></select><ChevronDown size={15} /></div><button className="filter-button" onClick={() => onNotice('Les filtres avancés sont ouverts.')}><Filter size={17} /> Filtres avancés <span>3</span></button></div><div className="active-filters"><span>Afrique <X size={13} /></span><span>U13 — U19 <X size={13} /></span><span>Profil vérifié <X size={13} /></span><button onClick={() => { setQuery(''); setPosition('Toutes les positions'); }}>Réinitialiser</button></div><div className="result-heading"><strong>{players.length} <span>talent{players.length > 1 ? 's' : ''} correspond{players.length > 1 ? 'ent' : ''}</span></strong><button className="sort-button" onClick={() => onProfile(players[0])}>Trier par : <b>Score de potentiel</b><ChevronDown size={14} /></button></div><div className="player-grid explorer-grid">{players.length ? players.map((player) => <PlayerCard key={player.id} player={player} onProfile={onProfile} />) : <div className="empty-state"><Search size={26} /><h3>Aucun talent trouvé</h3><p>Essayez une autre recherche ou retirez un filtre.</p></div>}</div></div>;
+function TalentExplorer({
+  query, setQuery, position, setPosition, country, setCountry, countryOptions, sortBy, setSortBy, players, totalCount, onProfile, onNotice,
+}: {
+  query: string; setQuery: (value: string) => void;
+  position: string; setPosition: (value: string) => void;
+  country: string; setCountry: (value: string) => void;
+  countryOptions: string[];
+  sortBy: 'potential' | 'name'; setSortBy: (value: 'potential' | 'name') => void;
+  players: Player[]; totalCount: number;
+  onProfile: (player: Player) => void; onNotice: (message: string) => void;
+}) {
+  const { session } = useAuth();
+  const [showFilters, setShowFilters] = useState(false);
+  const [savingAlert, setSavingAlert] = useState(false);
+
+  const activeFilters: { label: string; clear: () => void }[] = [];
+  if (query.trim()) activeFilters.push({ label: `« ${query.trim()} »`, clear: () => setQuery('') });
+  if (position !== 'Toutes les positions') activeFilters.push({ label: position, clear: () => setPosition('Toutes les positions') });
+  if (country !== 'Tous les pays') activeFilters.push({ label: country, clear: () => setCountry('Tous les pays') });
+
+  const resetAll = () => { setQuery(''); setPosition('Toutes les positions'); setCountry('Tous les pays'); };
+
+  const handleSaveAlert = async () => {
+    if (!session) return onNotice('Connectez-vous pour enregistrer une alerte de recherche.');
+    setSavingAlert(true);
+    const { error } = await supabase.from('talent_alerts').insert({
+      user_id: session.user.id,
+      query: query.trim() || null,
+      position: position === 'Toutes les positions' ? null : position,
+      country: country === 'Tous les pays' ? null : country,
+    });
+    setSavingAlert(false);
+    onNotice(error ? `Erreur : ${error.message}` : 'Votre alerte de recherche a été enregistrée.');
+  };
+
+  return (
+    <div className="page explorer-page">
+      <div className="page-intro">
+        <div><div className="eyebrow">Base de talents</div><h1>Découvrir les talents</h1><p>Explorez les profils qui façonnent le prochain chapitre du football africain.</p></div>
+        <button className="button button-primary" onClick={handleSaveAlert} disabled={savingAlert}><SlidersHorizontal size={17} /> {savingAlert ? 'Enregistrement…' : 'Enregistrer une alerte'}</button>
+      </div>
+      <div className="explorer-toolbar">
+        <div className="search-field"><Search size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher un nom, une académie, un pays..." /></div>
+        <div className="select-field"><Filter size={16} /><select value={position} onChange={(event) => setPosition(event.target.value)}><option>Toutes les positions</option><option>Ailier droit</option><option>Ailier gauche</option><option>Milieu central</option><option>Milieu défensif</option><option>Défenseur central</option><option>Attaquant</option><option>Gardien</option></select><ChevronDown size={15} /></div>
+        <button className="filter-button" onClick={() => setShowFilters((v) => !v)}><Filter size={17} /> Filtres avancés {activeFilters.length > 0 && <span>{activeFilters.length}</span>}</button>
+      </div>
+      {showFilters && (
+        <div className="content-card" style={{ marginBottom: 14, padding: 16 }}>
+          <label>Pays<select value={country} onChange={(e) => setCountry(e.target.value)}>{countryOptions.map((c) => <option key={c} value={c}>{c}</option>)}</select></label>
+        </div>
+      )}
+      {activeFilters.length > 0 && (
+        <div className="active-filters">
+          {activeFilters.map((f) => <span key={f.label} onClick={f.clear} style={{ cursor: 'pointer' }}>{f.label} <X size={13} /></span>)}
+          <button onClick={resetAll}>Réinitialiser</button>
+        </div>
+      )}
+      <div className="result-heading">
+        <strong>{players.length}<span> / {totalCount} talent{totalCount > 1 ? 's' : ''}</span></strong>
+        <button className="sort-button" onClick={() => setSortBy(sortBy === 'potential' ? 'name' : 'potential')}>
+          Trier par : <b>{sortBy === 'potential' ? 'Score de potentiel' : 'Nom (A → Z)'}</b><ChevronDown size={14} />
+        </button>
+      </div>
+      <div className="player-grid explorer-grid">
+        {players.length ? players.map((player) => <PlayerCard key={player.id} player={player} onProfile={onProfile} />) : (
+          <div className="empty-state"><Search size={26} /><h3>Aucun talent trouvé</h3><p>Essayez une autre recherche ou retirez un filtre.</p></div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function PlayerCard({ player, onProfile }: { player: Player; onProfile: (player: Player) => void }) {
@@ -370,11 +451,114 @@ function PlayerCard({ player, onProfile }: { player: Player; onProfile: (player:
 }
 
 function PlayerProfile({ player, onBack, onNotice, onTab }: { player: Player; onBack: () => void; onNotice: (message: string) => void; onTab: (tab: 'stats' | 'videos' | 'academic') => void }) {
-  return <div className="page profile-page"><button className="back-link" onClick={onBack}>← Retour aux talents</button><section className="profile-hero"><div className="profile-image" style={{ backgroundImage: `url(${player.image})` }} /><div className="profile-summary"><div className="verified-line"><ShieldCheck size={15} /> Profil vérifié <span>Mis à jour il y a 2 jours</span></div><h1>{player.name}</h1><p className="profile-position">{player.position} <span>·</span> U{player.age < 18 ? '17' : '19'} <span>·</span> {player.age} ans</p><p className="profile-academy"><Building2 size={16} /> {player.academy} <span className="flag-dot">{player.flag}</span> {player.country}</p><div className="profile-actions"><button className="button button-primary" onClick={() => onNotice('Votre demande de contact a été enregistrée.')}>Demander le contact <ArrowRight size={16} /></button><button className="icon-button large" onClick={() => onNotice('Talent ajouté à votre shortlist.')}><Heart size={18} /></button></div></div><div className="profile-score-card"><span>Score sportif</span><strong>{player.sport}<small>/100</small></strong><div className="score-bar"><i style={{ width: `${player.sport}%` }} /></div><em>Évaluation indicative</em></div></section><div className="profile-tabs"><button className="active" onClick={() => onNotice('Vous êtes déjà sur la vue d’ensemble.')}>Vue d’ensemble</button><button onClick={() => onTab('stats')}>Statistiques</button><button onClick={() => onTab('videos')}>Vidéothèque <span>12</span></button><button onClick={() => onTab('academic')}>Parcours académique</button></div><section className="profile-content"><div className="profile-main-column"><div className="content-card"><div className="content-card-heading"><div><div className="eyebrow">Identité sportive</div><h2>Le profil en un regard</h2></div><button className="more-button" onClick={() => onNotice('Options supplémentaires ouvertes.')}>•••</button></div><div className="identity-grid"><DataPoint label="Nom complet" value={player.name} /><DataPoint label="Date de naissance" value={player.dateOfBirth ? new Date(player.dateOfBirth).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Non renseignée'} /><DataPoint label="Nationalité" value={player.country} /><DataPoint label="Taille / poids" value={`${player.height} · ${player.weightKg ? `${player.weightKg} kg` : 'poids non renseigné'}`} /><DataPoint label="Pied fort" value={`Pied ${player.foot.toLowerCase()}`} /><DataPoint label="Poste principal" value={player.position} /></div></div><div className="content-card"><div className="content-card-heading"><div><div className="eyebrow">Saison 2025/26</div><h2>Production sur le terrain</h2></div><button className="select-small" onClick={() => onNotice('Sélecteur de période ouvert.')} >Cette saison <ChevronDown size={14} /></button></div><div className="performance-grid"><Performance value={player.matches} label="Matchs" /><Performance value={player.goals} label="Buts" highlight /><Performance value={player.assists} label="Passes décisives" /><Performance value="1 964" label="Minutes" /></div><div className="chart-placeholder"><div className="chart-label"><span>Progression du niveau sportif</span><strong>+12,6% <TrendingUp size={14} /></strong></div><div className="chart-lines"><i /><i /><i /><i /><i /></div><svg viewBox="0 0 600 130" preserveAspectRatio="none" className="line-chart"><path d="M0,110 C35,103 45,89 80,96 C116,102 132,76 167,82 C202,88 212,61 248,67 C284,74 306,42 344,49 C385,57 391,74 427,54 C466,33 482,45 516,27 C548,11 568,24 600,7" fill="none" stroke="#b7d832" strokeWidth="3" /><path d="M0,110 C35,103 45,89 80,96 C116,102 132,76 167,82 C202,88 212,61 248,67 C284,74 306,42 344,49 C385,57 391,74 427,54 C466,33 482,45 516,27 C548,11 568,24 600,7 L600,130 L0,130 Z" fill="url(#chartFill)" opacity=".25" /><defs><linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#d7f04a" /><stop offset="1" stopColor="#d7f04a" stopOpacity="0" /></linearGradient></defs></svg><div className="chart-months"><span>Août</span><span>Sept.</span><span>Oct.</span><span>Nov.</span><span>Déc.</span><span>Janv.</span><span>Févr.</span></div></div></div></div><aside className="profile-side-column"><div className="content-card double-project-card"><div className="eyebrow">Double projet</div><h3>Sport & études</h3><p>Un talent complet se construit sur et en dehors du terrain.</p><div className="index-row"><div className="index-icon lime"><Zap size={17} /></div><div><span>Sport performance index</span><strong>{player.sport}<small>/100</small></strong></div></div><div className="index-row"><div className="index-icon orange"><BookOpen size={17} /></div><div><span>Academic performance index</span><strong>{player.academic}<small> moyenne</small></strong></div></div><button className="text-button" onClick={() => onTab('academic')}>Voir le dossier académique <ArrowRight size={15} /></button></div><div className="content-card scout-note"><div className="scout-note-top"><div className="avatar avatar-orange">ML</div><div><strong>Marie Laurent</strong><span>Scout vérifiée · France</span></div><Star size={17} fill="#f2b35f" color="#f2b35f" /></div><p>« Un profil explosif, très à l’aise dans les un-contre-un. Sa marge de progression est particulièrement intéressante. »</p><span className="note-date">Rapport publié le 18 févr. 2026</span></div></aside></section></div>;
+  const { session } = useAuth();
+  const [videoCount, setVideoCount] = useState<number | null>(null);
+  const [inShortlist, setInShortlist] = useState(false);
+  const [sendingContact, setSendingContact] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!player.dbId) return;
+      const { count } = await supabase.from('player_videos').select('id', { count: 'exact', head: true }).eq('player_id', player.dbId);
+      if (!cancelled) setVideoCount(count ?? 0);
+      if (session) {
+        const { data: memberships } = await supabase.from('shortlist_players').select('shortlist_id, shortlists!inner(owner_id)').eq('player_id', player.dbId).eq('shortlists.owner_id', session.user.id);
+        if (!cancelled) setInShortlist((memberships?.length ?? 0) > 0);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [player.dbId, session]);
+
+  const handleContact = async () => {
+    if (!session) return onNotice('Connectez-vous pour demander un contact.');
+    if (!player.dbId) return onNotice('Ce profil de démonstration n’est pas relié à une fiche réelle.');
+    setSendingContact(true);
+    const { error } = await supabase.from('player_contact_requests').insert({ player_id: player.dbId, requester_id: session.user.id });
+    setSendingContact(false);
+    onNotice(error ? `Erreur : ${error.message}` : 'Votre demande de contact a été envoyée à l’académie.');
+  };
+
+  const handleShortlistToggle = async () => {
+    if (!session) return onNotice('Connectez-vous pour ajouter ce talent à une shortlist.');
+    if (!player.dbId) return onNotice('Ce profil de démonstration n’est pas relié à une fiche réelle.');
+    if (inShortlist) {
+      const { data: lists } = await supabase.from('shortlists').select('id').eq('owner_id', session.user.id);
+      const listIds = (lists ?? []).map((l) => l.id);
+      if (listIds.length) await supabase.from('shortlist_players').delete().eq('player_id', player.dbId).in('shortlist_id', listIds);
+      setInShortlist(false);
+      onNotice('Talent retiré de vos shortlists.');
+      return;
+    }
+    let { data: defaultList } = await supabase.from('shortlists').select('id').eq('owner_id', session.user.id).order('created_at', { ascending: true }).limit(1).maybeSingle();
+    if (!defaultList) {
+      const { data: created } = await supabase.from('shortlists').insert({ owner_id: session.user.id, name: 'Ma shortlist' }).select().single();
+      defaultList = created;
+    }
+    if (!defaultList) return onNotice('Impossible de créer votre shortlist.');
+    const { error } = await supabase.from('shortlist_players').insert({ shortlist_id: defaultList.id, player_id: player.dbId });
+    if (error) return onNotice(`Erreur : ${error.message}`);
+    setInShortlist(true);
+    onNotice('Talent ajouté à votre shortlist.');
+  };
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}${window.location.pathname}#player-${player.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      onNotice('Le lien du profil a été copié dans le presse-papiers.');
+    } catch {
+      onNotice(url);
+    }
+  };
+
+  return <div className="page profile-page"><button className="back-link" onClick={onBack}>← Retour aux talents</button><section className="profile-hero"><div className="profile-image" style={{ backgroundImage: `url(${player.image})` }} /><div className="profile-summary"><div className="verified-line"><ShieldCheck size={15} /> Profil vérifié</div><h1>{player.name}</h1><p className="profile-position">{player.position} <span>·</span> U{player.age < 18 ? '17' : '19'} <span>·</span> {player.age} ans</p><p className="profile-academy"><Building2 size={16} /> {player.academy} <span className="flag-dot">{player.flag}</span> {player.country}</p><div className="profile-actions"><button className="button button-primary" onClick={handleContact} disabled={sendingContact}>{sendingContact ? 'Envoi…' : 'Demander le contact'} <ArrowRight size={16} /></button><button className="icon-button large" onClick={handleShortlistToggle} style={inShortlist ? { color: '#d7f04a', borderColor: '#d7f04a' } : undefined}><Heart size={18} fill={inShortlist ? 'currentColor' : 'none'} /></button><button className="icon-button large" onClick={handleShare}><Share2 size={17} /></button></div></div><div className="profile-score-card"><span>Score sportif</span><strong>{player.sport}<small>/100</small></strong><div className="score-bar"><i style={{ width: `${player.sport}%` }} /></div><em>Évaluation indicative</em></div></section><div className="profile-tabs"><button className="active">Vue d’ensemble</button><button onClick={() => onTab('stats')}>Statistiques</button><button onClick={() => onTab('videos')}>Vidéothèque {videoCount !== null && <span>{videoCount}</span>}</button><button onClick={() => onTab('academic')}>Parcours académique</button></div><section className="profile-content"><div className="profile-main-column"><div className="content-card"><div className="content-card-heading"><div><div className="eyebrow">Identité sportive</div><h2>Le profil en un regard</h2></div></div><div className="identity-grid"><DataPoint label="Nom complet" value={player.name} /><DataPoint label="Date de naissance" value={player.dateOfBirth ? new Date(player.dateOfBirth).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Non renseignée'} /><DataPoint label="Nationalité" value={player.country} /><DataPoint label="Taille / poids" value={`${player.height} · ${player.weightKg ? `${player.weightKg} kg` : 'poids non renseigné'}`} /><DataPoint label="Pied fort" value={`Pied ${player.foot.toLowerCase()}`} /><DataPoint label="Poste principal" value={player.position} /></div></div><div className="content-card"><div className="content-card-heading"><div><div className="eyebrow">Saison 2025/26</div><h2>Production sur le terrain</h2></div></div><div className="performance-grid"><Performance value={player.matches} label="Matchs" /><Performance value={player.goals} label="Buts" highlight /><Performance value={player.assists} label="Passes décisives" /></div><div className="chart-placeholder"><div className="chart-label"><span>Progression du niveau sportif</span><strong>+12,6% <TrendingUp size={14} /></strong></div><div className="chart-lines"><i /><i /><i /><i /><i /></div><svg viewBox="0 0 600 130" preserveAspectRatio="none" className="line-chart"><path d="M0,110 C35,103 45,89 80,96 C116,102 132,76 167,82 C202,88 212,61 248,67 C284,74 306,42 344,49 C385,57 391,74 427,54 C466,33 482,45 516,27 C548,11 568,24 600,7" fill="none" stroke="#b7d832" strokeWidth="3" /><path d="M0,110 C35,103 45,89 80,96 C116,102 132,76 167,82 C202,88 212,61 248,67 C284,74 306,42 344,49 C385,57 391,74 427,54 C466,33 482,45 516,27 C548,11 568,24 600,7 L600,130 L0,130 Z" fill="url(#chartFill)" opacity=".25" /><defs><linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#d7f04a" /><stop offset="1" stopColor="#d7f04a" stopOpacity="0" /></linearGradient></defs></svg><div className="chart-months"><span>Août</span><span>Sept.</span><span>Oct.</span><span>Nov.</span><span>Déc.</span><span>Janv.</span><span>Févr.</span></div></div></div></div><aside className="profile-side-column"><div className="content-card double-project-card"><div className="eyebrow">Double projet</div><h3>Sport & études</h3><p>Un talent complet se construit sur et en dehors du terrain.</p><div className="index-row"><div className="index-icon lime"><Zap size={17} /></div><div><span>Sport performance index</span><strong>{player.sport}<small>/100</small></strong></div></div><div className="index-row"><div className="index-icon orange"><BookOpen size={17} /></div><div><span>Academic performance index</span><strong>{player.academic}<small> moyenne</small></strong></div></div><button className="text-button" onClick={() => onTab('academic')}>Voir le dossier académique <ArrowRight size={15} /></button></div></aside></section></div>;
 }
 
-function Dashboard({ players, onExplore, onNotice }: { players: Player[]; onExplore: () => void; onNotice: (message: string) => void }) {
-  return <div className="page dashboard-page"><div className="page-intro"><div><div className="eyebrow">Espace personnel</div><h1>Bonjour, Alex <span className="wave">.</span></h1><p>Voici ce qui se passe dans votre réseau aujourd’hui.</p></div><button className="button button-primary" onClick={onExplore}><Search size={17} /> Explorer les profils</button></div><div className="dashboard-kpis"><Kpi icon={Users} label="Talents suivis" value="48" trend="+6 ce mois" color="lime" /><Kpi icon={Heart} label="Ma shortlist" value="12" trend="3 nouveaux" color="orange" /><Kpi icon={FileText} label="Rapports créés" value="26" trend="+18%" color="blue" /><Kpi icon={CalendarDays} label="Essais à venir" value="04" trend="2 cette semaine" color="pink" /></div><section className="dashboard-grid"><div className="content-card activity-card"><div className="content-card-heading"><div><div className="eyebrow">Votre activité</div><h2>Progression du réseau</h2></div><button className="select-small" onClick={() => onNotice('Période du graphique modifiée.')}>30 derniers jours <ChevronDown size={14} /></button></div><div className="big-chart"><div className="big-chart-number">+24,8% <span><TrendingUp size={15} /> vs période précédente</span></div><div className="chart-placeholder tall-chart"><div className="chart-lines"><i /><i /><i /><i /><i /></div><svg viewBox="0 0 700 190" preserveAspectRatio="none" className="line-chart"><path d="M0,154 C40,143 55,150 82,135 C112,118 126,130 155,116 C188,100 206,110 239,95 C274,77 290,96 325,76 C361,54 380,66 412,55 C446,44 461,65 495,39 C529,13 548,42 580,25 C617,5 655,21 700,4" fill="none" stroke="#b7d832" strokeWidth="3.5" /><path d="M0,154 C40,143 55,150 82,135 C112,118 126,130 155,116 C188,100 206,110 239,95 C274,77 290,96 325,76 C361,54 380,66 412,55 C446,44 461,65 495,39 C529,13 548,42 580,25 C617,5 655,21 700,4 L700,190 L0,190 Z" fill="url(#dashFill)" opacity=".2" /><defs><linearGradient id="dashFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#d7f04a" /><stop offset="1" stopColor="#d7f04a" stopOpacity="0" /></linearGradient></defs></svg><div className="chart-months"><span>01 Fév.</span><span>06 Fév.</span><span>11 Fév.</span><span>16 Fév.</span><span>21 Fév.</span><span>26 Fév.</span></div></div></div></div><div className="content-card recommended-card"><div className="content-card-heading"><div><div className="eyebrow">Pour vous</div><h2>Nouveaux talents</h2></div><button className="more-button" onClick={() => onNotice('Options supplémentaires ouvertes.')}>•••</button></div><div className="mini-player-list">{players.slice(0, 3).map((player) => <button key={player.id} className="mini-player-row" onClick={onExplore}><span className="mini-row-image" style={{ backgroundImage: `url(${player.image})` }} /><span className="mini-row-copy"><strong>{player.name}</strong><small>{player.position} · {player.country}</small></span><span className="mini-row-score">{player.sport}<small>score</small></span><ArrowRight size={15} /></button>)}</div><button className="text-button" onClick={onExplore}>Voir les recommandations <ArrowRight size={15} /></button></div></section><section className="dashboard-bottom"><div className="content-card upcoming-card"><div className="content-card-heading"><div><div className="eyebrow">Agenda</div><h2>Prochaines échéances</h2></div><button className="text-button" onClick={() => onNotice('Le calendrier complet arrive bientôt.')}>Voir le calendrier <ArrowRight size={14} /></button></div><div className="calendar-row"><div className="calendar-date"><strong>24</strong><span>FÉVR.</span></div><div><strong>Essai — Moussa Traoré</strong><span>En ligne · 14:00 GMT</span></div><span className="status-pill green">Confirmé</span></div><div className="calendar-row"><div className="calendar-date orange-date"><strong>28</strong><span>FÉVR.</span></div><div><strong>Rapport à finaliser</strong><span>Kwame Mensah · Accra Football Lab</span></div><span className="status-pill yellow">À faire</span></div></div><div className="quote-card"><Sparkles size={22} /><p>“Le potentiel est une promesse. Le travail est ce qui la rend visible.”</p><span>— AfriTalents</span></div></section></div>;
+function Dashboard({ players, onExplore, onNavigate }: { players: Player[]; onExplore: () => void; onNavigate: (view: View) => void }) {
+  const { session, profile } = useAuth();
+  const [kpis, setKpis] = useState({ shortlisted: 0, reports: 0, upcoming: 0 });
+  const [upcoming, setUpcoming] = useState<{ id: string; label: string; sub: string; status: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!session) {
+        setLoading(false);
+        return;
+      }
+      const [{ data: lists }, { count: reportsCount }, { data: operations }] = await Promise.all([
+        supabase.from('shortlists').select('id').eq('owner_id', session.user.id),
+        supabase.from('scouting_reports').select('id', { count: 'exact', head: true }).eq('scout_user_id', session.user.id),
+        supabase.from('transfer_operations').select('id, counterparty, status, target_date, players(first_name, last_name)').order('target_date', { ascending: true }).limit(3),
+      ]);
+      if (cancelled) return;
+      let shortlistedCount = 0;
+      if (lists && lists.length > 0) {
+        const { count } = await supabase.from('shortlist_players').select('player_id', { count: 'exact', head: true }).in('shortlist_id', lists.map((l) => l.id));
+        shortlistedCount = count ?? 0;
+      }
+      setKpis({ shortlisted: shortlistedCount, reports: reportsCount ?? 0, upcoming: operations?.length ?? 0 });
+      setUpcoming((operations ?? []).map((op) => {
+        const opPlayers = op as unknown as { players: { first_name: string; last_name: string } | null; counterparty: string; status: string; target_date: string | null; id: string };
+        return {
+          id: opPlayers.id,
+          label: opPlayers.players ? `${op.status === 'completed' ? 'Terminé' : 'Opération'} — ${opPlayers.players.first_name} ${opPlayers.players.last_name}` : 'Opération',
+          sub: opPlayers.counterparty,
+          status: opPlayers.status,
+        };
+      }));
+      setLoading(false);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [session]);
+
+  const firstName = profile?.full_name?.split(' ')[0] ?? 'bienvenue';
+
+  return <div className="page dashboard-page"><div className="page-intro"><div><div className="eyebrow">Espace personnel</div><h1>Bonjour, {firstName} <span className="wave">.</span></h1><p>Voici ce qui se passe dans votre réseau aujourd’hui.</p></div><button className="button button-primary" onClick={onExplore}><Search size={17} /> Explorer les profils</button></div><div className="dashboard-kpis"><Kpi icon={Users} label="Talents dans la base" value={String(players.length)} trend="Profils publics" color="lime" /><Kpi icon={Heart} label="Ma shortlist" value={loading ? '—' : String(kpis.shortlisted)} trend="Joueurs suivis" color="orange" /><Kpi icon={FileText} label="Mes rapports" value={loading ? '—' : String(kpis.reports)} trend="Rédigés" color="blue" /><Kpi icon={CalendarDays} label="Opérations actives" value={loading ? '—' : String(kpis.upcoming)} trend="Transfer Center" color="pink" /></div><section className="dashboard-grid"><div className="content-card activity-card"><div className="content-card-heading"><div><div className="eyebrow">Votre activité</div><h2>Progression du réseau</h2></div></div><div className="big-chart"><div className="big-chart-number">{players.length} <span><TrendingUp size={15} /> profils dans la base actuellement</span></div><div className="chart-placeholder tall-chart"><div className="chart-lines"><i /><i /><i /><i /><i /></div><svg viewBox="0 0 700 190" preserveAspectRatio="none" className="line-chart"><path d="M0,154 C40,143 55,150 82,135 C112,118 126,130 155,116 C188,100 206,110 239,95 C274,77 290,96 325,76 C361,54 380,66 412,55 C446,44 461,65 495,39 C529,13 548,42 580,25 C617,5 655,21 700,4" fill="none" stroke="#b7d832" strokeWidth="3.5" /><path d="M0,154 C40,143 55,150 82,135 C112,118 126,130 155,116 C188,100 206,110 239,95 C274,77 290,96 325,76 C361,54 380,66 412,55 C446,44 461,65 495,39 C529,13 548,42 580,25 C617,5 655,21 700,4 L700,190 L0,190 Z" fill="url(#dashFill)" opacity=".2" /><defs><linearGradient id="dashFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#d7f04a" /><stop offset="1" stopColor="#d7f04a" stopOpacity="0" /></linearGradient></defs></svg></div></div></div><div className="content-card recommended-card"><div className="content-card-heading"><div><div className="eyebrow">Pour vous</div><h2>Talents de la base</h2></div></div><div className="mini-player-list">{players.slice(0, 3).map((player) => <button key={player.id} className="mini-player-row" onClick={onExplore}><span className="mini-row-image" style={{ backgroundImage: `url(${player.image})` }} /><span className="mini-row-copy"><strong>{player.name}</strong><small>{player.position} · {player.country}</small></span><span className="mini-row-score">{player.sport}<small>score</small></span><ArrowRight size={15} /></button>)}</div><button className="text-button" onClick={onExplore}>Voir les recommandations <ArrowRight size={15} /></button></div></section><section className="dashboard-bottom"><div className="content-card upcoming-card"><div className="content-card-heading"><div><div className="eyebrow">Agenda</div><h2>Opérations en cours</h2></div><button className="text-button" onClick={() => onNavigate('transfers')}>Voir le Transfer Center <ArrowRight size={14} /></button></div>{!session && <p style={{ color: '#8e958d', fontSize: 13 }}>Connectez-vous pour voir vos opérations en cours.</p>}{session && upcoming.length === 0 && !loading && <p style={{ color: '#8e958d', fontSize: 13 }}>Aucune opération pour le moment.</p>}{upcoming.map((item) => <div className="calendar-row" key={item.id}><div className="calendar-date"><strong>—</strong><span>{item.status.slice(0, 4).toUpperCase()}</span></div><div><strong>{item.label}</strong><span>{item.sub}</span></div><span className="status-pill green">{item.status === 'completed' ? 'Terminé' : 'En cours'}</span></div>)}</div><div className="quote-card"><Sparkles size={22} /><p>“Le potentiel est une promesse. Le travail est ce qui la rend visible.”</p><span>— AfriTalents</span></div></section></div>;
 }
 
 function Metric({ icon: Icon, value, label, trend }: { icon: typeof Users; value: string; label: string; trend: string }) { return <div className="metric"><div className="metric-icon"><Icon size={18} /></div><div><strong>{value}</strong><span>{label}</span><small>{trend}</small></div></div>; }
@@ -425,9 +609,14 @@ function AcademyRegistration({ onNotice }: { onNotice: (message: string) => void
 }
 
 
-function PlayerStats({ player, onBack, onNotice }: { player: Player; onBack: () => void; onNotice: (message: string) => void }) {
-  const stats = [['Vitesse', '88', '+6'], ['Technique', '84', '+4'], ['Vision', '91', '+9'], ['Mental', '86', '+5']];
-  return <div className="page workspace-page"><button className="back-link" onClick={onBack}><ArrowLeft size={14} /> Retour au profil</button><div className="page-intro"><div><div className="eyebrow">Performance individuelle</div><h1>Statistiques de {player.name}</h1><p>Une lecture claire des performances observées et du potentiel projeté.</p></div><span className="status-pill green">Dernière mise à jour · aujourd’hui</span></div><div className="stats-overview"><div className="content-card stats-score"><span>Score sport global</span><strong>{player.sport}</strong><div className="score-bar"><i style={{ width: `${player.sport}%` }} /></div><small>Top 8% des profils de sa catégorie</small></div><div className="content-card"><div className="eyebrow">Progression</div><h2>Indice de développement</h2><div className="big-chart-number">+18.4% <span>sur les 6 derniers mois</span></div><div className="stats-bars">{[64, 70, 73, 78, 82, 88].map((value, index) => <div key={value}><span style={{ height: `${value}%` }} /><small>{['Sep', 'Oct', 'Nov', 'Déc', 'Jan', 'Fév'][index]}</small></div>)}</div></div></div><div className="content-card stat-table"><div className="content-card-heading"><div><div className="eyebrow">Détail des indicateurs</div><h2>Les qualités qui font la différence</h2></div><button className="select-small" onClick={() => onNotice('Sélecteur de période ouvert.')} >Cette saison <ChevronDown size={14} /></button></div>{stats.map(([label, value, trend]) => <div className="stat-line" key={label}><span>{label}</span><div className="stat-line-track"><i style={{ width: `${value}%` }} /></div><strong>{value}</strong><small>{trend}%</small></div>)}</div></div>;
+function PlayerStats({ player, onBack }: { player: Player; onBack: () => void }) {
+  const stats: [string, number, boolean][] = [
+    ['Technique', player.technicalScore ?? 0, player.technicalScore != null],
+    ['Tactique', player.tacticalScore ?? 0, player.tacticalScore != null],
+    ['Physique', player.physicalScore ?? 0, player.physicalScore != null],
+    ['Mental', player.mentalScore ?? 0, player.mentalScore != null],
+  ].filter((s) => s[2]) as [string, number, boolean][];
+  return <div className="page workspace-page"><button className="back-link" onClick={onBack}><ArrowLeft size={14} /> Retour au profil</button><div className="page-intro"><div><div className="eyebrow">Performance individuelle</div><h1>Statistiques de {player.name}</h1><p>Une lecture claire des performances observées et du potentiel projeté.</p></div></div><div className="stats-overview"><div className="content-card stats-score"><span>Score sport global</span><strong>{player.sport}</strong><div className="score-bar"><i style={{ width: `${player.sport}%` }} /></div></div><div className="content-card"><div className="eyebrow">Saison en cours</div><h2>Statistiques de matchs</h2><div className="big-chart-number">{player.matches} <span>matchs joués</span></div><div className="stats-bars" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}><div><span style={{ height: `${Math.min(100, player.goals * 5)}%` }} /><small>{player.goals} buts</small></div><div><span style={{ height: `${Math.min(100, player.assists * 5)}%` }} /><small>{player.assists} passes D.</small></div><div><span style={{ height: `${Math.min(100, player.matches * 3)}%` }} /><small>{player.matches} matchs</small></div></div></div></div>{stats.length > 0 ? <div className="content-card stat-table"><div className="content-card-heading"><div><div className="eyebrow">Détail des indicateurs</div><h2>Les qualités qui font la différence</h2></div></div>{stats.map(([label, value]) => <div className="stat-line" key={label}><span>{label}</span><div className="stat-line-track"><i style={{ width: `${value}%` }} /></div><strong>{value}</strong></div>)}</div> : <div className="disclaimer"><ShieldCheck size={17} /><span>Aucune évaluation détaillée n’a encore été enregistrée pour ce joueur.</span></div>}</div>;
 }
 
 function VideoLibrary({ player, onBack, onNotice }: { player: Player; onBack: () => void; onNotice: (message: string) => void }) {
@@ -481,7 +670,15 @@ function VideoLibrary({ player, onBack, onNotice }: { player: Player; onBack: ()
 }
 
 function AcademicPath({ player, onBack, onNotice }: { player: Player; onBack: () => void; onNotice: (message: string) => void }) {
-  return <div className="page workspace-page"><button className="back-link" onClick={onBack}><ArrowLeft size={14} /> Retour au profil</button><div className="page-intro"><div><div className="eyebrow">Au-delà du terrain</div><h1>Parcours académique</h1><p>Le contexte scolaire et les prochaines étapes d’accompagnement de {player.name}.</p></div><button className="button button-ghost" onClick={() => onNotice('Le dossier académique a été partagé avec votre équipe.')}><Share2 size={15} /> Partager le dossier</button></div><div className="academic-grid"><div className="content-card academic-summary"><div className="student-head"><div className="avatar avatar-lime">{player.name.split(' ').map((part) => part[0]).join('')}</div><div><strong>{player.name}</strong><span>Élève-athlète · U17</span></div><span className="status-pill green">Suivi actif</span></div><div className="academic-score"><span>Indice académique</span><strong>86<small>/100</small></strong><p>Régularité et engagement au-dessus de la moyenne.</p></div><div className="academic-points"><div><BookOpen size={16} /><span>Classe actuelle<strong>Seconde générale</strong></span></div><div><CalendarDays size={16} /><span>Prochaine étape<strong>Orientation 2026</strong></span></div><div><Globe2 size={16} /><span>Langues<strong>Français · Anglais</strong></span></div></div></div><div className="content-card academic-timeline"><div className="eyebrow">Chronologie</div><h2>Un parcours équilibré</h2><div className="academic-event"><span>2026</span><div><strong>Préparation à l’orientation</strong><p>Choix d’une filière compatible avec un projet sportif international.</p></div></div><div className="academic-event"><span>2025</span><div><strong>Certification d’anglais</strong><p>Progression confirmée lors du dernier trimestre.</p></div></div><div className="academic-event"><span>2024</span><div><strong>Entrée au programme sport-études</strong><p>Début du suivi individualisé et des bilans trimestriels.</p></div></div></div></div><div className="disclaimer"><ShieldCheck size={17} /><span>Les informations académiques sont partagées uniquement avec les personnes autorisées par le joueur ou sa structure.</span></div></div>;
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(`${player.name} — ${player.position}, ${player.country}. Indice académique : ${player.academic}.`);
+      onNotice('Le résumé du dossier a été copié dans le presse-papiers.');
+    } catch {
+      onNotice('Impossible de copier automatiquement. Sélectionnez et copiez le texte manuellement.');
+    }
+  };
+  return <div className="page workspace-page"><button className="back-link" onClick={onBack}><ArrowLeft size={14} /> Retour au profil</button><div className="page-intro"><div><div className="eyebrow">Au-delà du terrain</div><h1>Parcours académique</h1><p>Le contexte scolaire et les prochaines étapes d’accompagnement de {player.name}.</p></div><button className="button button-ghost" onClick={handleShare}><Share2 size={15} /> Partager le dossier</button></div><div className="academic-grid"><div className="content-card academic-summary"><div className="student-head"><div className="avatar avatar-lime">{player.name.split(' ').map((part) => part[0]).join('')}</div><div><strong>{player.name}</strong><span>Élève-athlète</span></div></div><div className="academic-score"><span>Indice académique</span><strong>{player.academic}</strong></div><div className="academic-points"><div><BookOpen size={16} /><span>Poste<strong>{player.position}</strong></span></div><div><Globe2 size={16} /><span>Académie<strong>{player.academy}</strong></span></div></div></div><div className="content-card"><div className="eyebrow">À propos</div><h2>Le double projet AfriTalents</h2><p style={{ color: '#c5cbc0', lineHeight: 1.7 }}>Chaque profil enregistré par une académie ou un administrateur peut être complété avec un suivi scolaire détaillé (classe, langues, jalons) directement depuis l’espace d’administration, pour donner une vision complète du parcours du joueur.</p></div></div><div className="disclaimer"><ShieldCheck size={17} /><span>Les informations académiques sont partagées uniquement avec les personnes autorisées par le joueur ou sa structure.</span></div></div>;
 }
 
 export default App;

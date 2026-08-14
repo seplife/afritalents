@@ -93,21 +93,78 @@ La vidéothèque du profil public lit et affiche les vraies vidéos Supabase ;
 le bouton **« Ajouter une vidéo »** y est visible uniquement pour les comptes
 administrateur et académie.
 
-**Non couvert dans cette passe** (contenu décoratif, non lié à un bouton
-demandé) : les graphiques de progression sur la page Statistiques et la
-chronologie de la page Parcours académique restent illustratifs — les
-brancher sur des données réelles nécessiterait d'ajouter de nouvelles tables
-(historique de progression, jalons académiques) qui n'ont pas été demandées
-explicitement.
+## 7. Fonctionnalités d'exploration et de tableau de bord activées
 
-## 7. Démarrage local
+- **Recherche de talents** : filtres par nom/académie/pays, par poste et par
+  pays (« Filtres avancés »), tri fonctionnel (score de potentiel / nom),
+  chips de filtres actifs cliquables pour les retirer individuellement,
+  bouton « Réinitialiser ».
+- **« Enregistrer une alerte »** : sauvegarde réellement les critères de
+  recherche courants dans une nouvelle table `talent_alerts` (nécessite la
+  migration `20260813150000_add_talent_alerts.sql`, voir étape 3bis
+  ci-dessous).
+- **Tableau de bord** : les indicateurs (talents dans la base, ma shortlist,
+  mes rapports, opérations actives) et la liste « Opérations en cours »
+  affichent désormais de vraies données issues de Supabase, propres à
+  l'utilisateur connecté. Le bouton « Voir le Transfer Center » navigue vers
+  la page correspondante.
+- **Statistiques joueur** : affiche les vrais scores technique / tactique /
+  physique / mental enregistrés par l'administrateur, ainsi que les
+  statistiques de matchs réelles (buts, passes décisives, matchs joués). Si
+  aucune évaluation n'a encore été saisie, un message honnête l'indique au
+  lieu d'afficher des chiffres inventés.
+- **Parcours académique** : le bouton « Partager le dossier » copie
+  réellement un résumé dans le presse-papiers.
+
+## 8. Étape 3bis — Appliquer la migration des alertes de recherche
+
+Un troisième fichier de migration a été ajouté :
+`supabase/migrations/20260813150000_add_talent_alerts.sql`. Appliquez-le de
+la même manière que les deux précédents (SQL Editor ou `supabase db push`)
+pour activer le bouton « Enregistrer une alerte ».
+
+## 9. Limitation connue
+
+Les graphiques de progression et la frise « Parcours académique » restent en
+grande partie informatifs plutôt que basés sur un historique enregistré :
+leur activation complète nécessiterait de nouvelles tables (historique de
+progression, jalons académiques datés) qui n'ont pas été demandées
+explicitement. Ils peuvent être ajoutés dans une prochaine itération selon
+les besoins.
+
+## 10. Gestion complète des joueurs (création, édition, statistiques, suppression)
+
+Depuis **Administration > Gestion des joueurs**, l'administrateur (ou un
+compte académie) peut désormais :
+
+- **Ajouter** un joueur avec toutes ses informations : identité, profil
+  sportif, évaluation indicative (technique/tactique/physique/mental/
+  potentiel), **statistiques de saison complètes** (matchs, minutes, buts,
+  passes décisives, tirs, passes réussies, tacles, interceptions), photo de
+  profil et vidéos.
+- **Modifier** (bouton crayon ✏️) n'importe quelle fiche existante : le
+  formulaire se pré-remplit avec toutes les données déjà enregistrées
+  (y compris l'évaluation et les statistiques de la dernière saison
+  renseignée), et l'enregistrement met à jour la fiche au lieu d'en créer
+  une nouvelle. La photo peut être remplacée ; de nouvelles vidéos peuvent
+  être ajoutées à celles déjà présentes.
+- **Gérer les vidéos** (bouton 🎥) : lecture, ajout de nouvelles vidéos.
+- **Supprimer** (bouton 🗑️) une fiche : la suppression est définitive et
+  entraîne automatiquement celle de ses photos/vidéos, statistiques,
+  évaluations et rapports de scouting associés (suppression en cascade
+  gérée par la base de données).
+
+Toutes ces actions écrivent directement dans les tables `players`,
+`player_profiles` et `player_statistics` de votre projet Supabase.
+
+## 11. Démarrage local
 
 ```bash
 npm install
 npm run dev
 ```
 
-## 8. Build de production
+## 12. Build de production
 
 ```bash
 npm run build

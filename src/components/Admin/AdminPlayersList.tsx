@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Loader2, Users, Video } from 'lucide-react';
+import { Plus, Trash2, Loader2, Users, Video, Pencil } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import type { DbPlayer } from '../../lib/types';
 import { AdminPlayerForm } from './AdminPlayerForm';
@@ -9,6 +9,7 @@ export function AdminPlayersList({ onNotice }: { onNotice: (message: string) => 
   const [players, setPlayers] = useState<DbPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<DbPlayer | null>(null);
   const [videosFor, setVideosFor] = useState<DbPlayer | null>(null);
 
   const loadPlayers = async () => {
@@ -25,7 +26,7 @@ export function AdminPlayersList({ onNotice }: { onNotice: (message: string) => 
   }, []);
 
   const handleDelete = async (player: DbPlayer) => {
-    if (!window.confirm(`Supprimer la fiche de ${player.first_name} ${player.last_name} ?`)) return;
+    if (!window.confirm(`Supprimer définitivement la fiche de ${player.first_name} ${player.last_name} ? Ses photos, vidéos, statistiques et rapports associés seront également supprimés.`)) return;
     const { error } = await supabase.from('players').delete().eq('id', player.id);
     if (error) onNotice(`Suppression impossible : ${error.message}`);
     else {
@@ -34,13 +35,15 @@ export function AdminPlayersList({ onNotice }: { onNotice: (message: string) => 
     }
   };
 
-  if (showForm) {
+  if (showForm || editingPlayer) {
     return (
       <AdminPlayerForm
         onNotice={onNotice}
-        onCancel={() => setShowForm(false)}
+        existingPlayer={editingPlayer}
+        onCancel={() => { setShowForm(false); setEditingPlayer(null); }}
         onSaved={() => {
           setShowForm(false);
+          setEditingPlayer(null);
           loadPlayers();
         }}
       />
@@ -95,10 +98,13 @@ export function AdminPlayersList({ onNotice }: { onNotice: (message: string) => 
               <span>{player.primary_position} · {player.country}</span>
             </div>
             <span className="status-pill green">{player.status === 'active' ? 'Actif' : player.status}</span>
+            <button className="row-action" onClick={() => setEditingPlayer(player)} title="Modifier la fiche">
+              <Pencil size={15} />
+            </button>
             <button className="row-action" onClick={() => setVideosFor(player)} title="Gérer les vidéos">
               <Video size={15} />
             </button>
-            <button className="row-action danger" onClick={() => handleDelete(player)}>
+            <button className="row-action danger" onClick={() => handleDelete(player)} title="Supprimer">
               <Trash2 size={15} />
             </button>
           </div>
