@@ -1,6 +1,6 @@
 // components/Admin/AdminPlayerForm.tsx
 import { useEffect, useState } from 'react';
-import { Upload, Save, X, Video as VideoIcon, Loader2, Trash2, } from 'lucide-react';
+import { Upload, Save, X, Video as VideoIcon, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import type { DbPlayer, DbPlayerVideo } from '../../lib/types';
