@@ -31,7 +31,7 @@ export function OpportunitiesPanel({ onNotice, onOpen }: { onNotice: (message: s
 
   const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!isAdminOrAcademy) return onNotice('La publication est réservée aux administrateurs et académies vérifiées.');
+    if (!isAdminOrAcademy) return onNotice('La publication est réservée aux administrateurs, académies et coachs vérifiés.');
     if (!form.title || !form.country) return onNotice('Le titre et le pays sont obligatoires.');
     const { error } = await supabase.from('opportunities').insert({
       title: form.title,

@@ -9,7 +9,7 @@ type AuthContextValue = {
   loading: boolean;
   isAdminOrAcademy: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string, fullName: string, role: 'academy' | 'scout') => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, fullName: string, role: 'academy' | 'coach' | 'scout') => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error ? traduireErreur(error.message) : null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, role: 'academy' | 'scout') => {
+  const signUp = async (email: string, password: string, fullName: string, role: 'academy' | 'coach' | 'scout') => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session?.user) await loadProfile(session.user.id);
   };
 
-  const isAdminOrAcademy = profile?.role === 'admin' || profile?.role === 'academy';
+  const isAdminOrAcademy = profile?.role === 'admin' || profile?.role === 'academy' || profile?.role === 'coach';
 
   return (
     <AuthContext.Provider value={{ session, profile, loading, isAdminOrAcademy, signIn, signUp, signOut, refreshProfile }}>

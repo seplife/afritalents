@@ -63,7 +63,7 @@ export function AdminPlayersList({ onNotice }: { onNotice: (message: string) => 
           <p>Toutes les fiches enregistrées dans votre base Supabase.</p>
         </div>
         <button className="button button-primary" onClick={() => setShowForm(true)}>
-          <Plus size={15} /> Ajouter un joueur
+          <Plus size={15} /> Ajouter
         </button>
       </div>
 
@@ -83,7 +83,7 @@ export function AdminPlayersList({ onNotice }: { onNotice: (message: string) => 
 
         {!loading && players.length === 0 && (
           <div style={{ padding: 24, display: 'flex', alignItems: 'center', gap: 8, color: '#8e958d' }}>
-            <Users size={16} /> Aucun joueur enregistré pour le moment.
+            <Users size={16} /> Aucun joueur enregistré pour le moment. Cliquez sur « Ajouter » pour créer la première fiche.
           </div>
         )}
 
@@ -98,15 +98,17 @@ export function AdminPlayersList({ onNotice }: { onNotice: (message: string) => 
               <span>{player.primary_position} · {player.country}</span>
             </div>
             <span className="status-pill green">{player.status === 'active' ? 'Actif' : player.status}</span>
-            <button className="row-action" onClick={() => setEditingPlayer(player)} title="Modifier la fiche">
-              <Pencil size={15} />
-            </button>
-            <button className="row-action" onClick={() => setVideosFor(player)} title="Gérer les vidéos">
-              <Video size={15} />
-            </button>
-            <button className="row-action danger" onClick={() => handleDelete(player)} title="Supprimer">
-              <Trash2 size={15} />
-            </button>
+            <div className="row-action-group">
+              <button className="row-action-labelled" onClick={() => setEditingPlayer(player)} title="Modifier la fiche">
+                <Pencil size={14} /> <span>Modifier</span>
+              </button>
+              <button className="row-action" onClick={() => setVideosFor(player)} title="Gérer les vidéos">
+                <Video size={15} />
+              </button>
+              <button className="row-action-labelled danger" onClick={() => handleDelete(player)} title="Supprimer">
+                <Trash2 size={14} /> <span>Supprimer</span>
+              </button>
+            </div>
           </div>
         ))}
       </div>

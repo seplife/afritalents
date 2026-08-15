@@ -8,7 +8,7 @@ export function AuthPanel({ onNotice }: { onNotice: (message: string) => void })
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'academy' | 'scout'>('scout');
+  const [role, setRole] = useState<'academy' | 'coach' | 'scout'>('coach');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -60,9 +60,10 @@ export function AuthPanel({ onNotice }: { onNotice: (message: string) => void })
             {mode === 'signup' && (
               <label>
                 Vous êtes
-                <select value={role} onChange={(e) => setRole(e.target.value as 'academy' | 'scout')}>
-                  <option value="scout">Scout / recruteur indépendant</option>
+                <select value={role} onChange={(e) => setRole(e.target.value as 'academy' | 'coach' | 'scout')}>
+                  <option value="coach">Entraîneur / Coach</option>
                   <option value="academy">Académie ou club</option>
+                  <option value="scout">Scout / recruteur indépendant</option>
                 </select>
               </label>
             )}
@@ -79,12 +80,13 @@ export function AuthPanel({ onNotice }: { onNotice: (message: string) => void })
           <h3>Accès sécurisé par rôle</h3>
           <p>
             Les comptes <strong>administrateur</strong> sont créés manuellement depuis Supabase pour des raisons de
-            sécurité. Les comptes <strong>académie</strong> et <strong>scout</strong> peuvent s’inscrire librement
-            ci-contre ; l’accès administrateur complet doit être accordé par un administrateur existant.
+            sécurité. Les comptes <strong>académie</strong>, <strong>coach</strong> et <strong>scout</strong>
+            peuvent s’inscrire librement ci-contre.
           </p>
           <div className="verification-list">
             <span>Administrateur — gère tous les joueurs et publications</span>
             <span>Académie — gère les joueurs de sa structure</span>
+            <span>Coach — ajoute, modifie et suit les joueurs qu’il entraîne</span>
             <span>Scout — consulte, shortlist et rédige des rapports</span>
           </div>
         </div>

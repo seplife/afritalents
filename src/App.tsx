@@ -241,7 +241,7 @@ function App() {
           {session ? (
             <button className="user-mini user-mini-button" onClick={async () => { await signOut(); setMobileMenu(false); }}>
               <div className="avatar avatar-lime">{(profile?.full_name ?? session.user.email ?? 'U').slice(0, 2).toUpperCase()}</div>
-              <div><strong>{profile?.full_name ?? session.user.email}</strong><span>{profile?.role === 'admin' ? 'Administrateur' : profile?.role === 'academy' ? 'Académie' : 'Scout'} · Déconnexion</span></div>
+              <div><strong>{profile?.full_name ?? session.user.email}</strong><span>{profile?.role === 'admin' ? 'Administrateur' : profile?.role === 'academy' ? 'Académie' : profile?.role === 'coach' ? 'Coach' : 'Scout'} · Déconnexion</span></div>
               <LogOut size={16} />
             </button>
           ) : (
@@ -282,7 +282,7 @@ function App() {
         {view === 'login' && <AuthPanel onNotice={showNotice} />}
         {view === 'admin' && (isAdminOrAcademy ? <AdminPlayersList onNotice={showNotice} /> : (
           <div className="page workspace-page">
-            <div className="disclaimer"><ShieldAlert size={17} /><span>Cette section est réservée aux comptes administrateur ou académie. {session ? 'Votre compte n’a pas ce rôle.' : 'Connectez-vous avec un compte autorisé.'}</span></div>
+            <div className="disclaimer"><ShieldAlert size={17} /><span>Cette section est réservée aux comptes administrateur, académie ou coach. {session ? 'Votre compte n’a pas ce rôle.' : 'Connectez-vous avec un compte autorisé.'}</span></div>
           </div>
         ))}
         {view === 'academy' && <AcademyRegistration onNotice={showNotice} />}
@@ -598,7 +598,7 @@ function VideoLibrary({ player, onBack, onNotice }: { player: Player; onBack: ()
 
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0 || !player.dbId) return;
-    if (!isAdminOrAcademy) return onNotice('Seuls les administrateurs et académies peuvent ajouter des vidéos.');
+    if (!isAdminOrAcademy) return onNotice('Seuls les administrateurs, académies et coachs peuvent ajouter des vidéos.');
     setUploading(true);
     for (const file of Array.from(files)) {
       const path = `${player.dbId}/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;

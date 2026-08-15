@@ -182,14 +182,34 @@ démarrera donc avec une base de données vide : c'est normal et attendu.
 Ajoutez votre premier joueur depuis l'espace Administration pour voir les
 pages publiques se remplir.
 
-## 12. Démarrage local
+## 12. Rôle "Coach" ajouté
+
+Un quatrième rôle applicatif a été ajouté : **Coach / Entraîneur**. Comme les
+administrateurs et les académies, un compte coach peut :
+
+- **Ajouter** un joueur (bouton « Ajouter » dans Administration > Gestion des
+  joueurs)
+- **Modifier** n'importe quelle fiche existante (bouton « Modifier »)
+- **Supprimer** une fiche (bouton « Supprimer »)
+- Gérer les photos, vidéos, l'évaluation (performance) et les statistiques de
+  chaque joueur
+
+Un compte coach s'inscrit normalement depuis l'écran Connexion en
+sélectionnant « Entraîneur / Coach ». Aucune promotion manuelle n'est
+nécessaire (contrairement au rôle admin).
+
+Un **quatrième fichier de migration** a été ajouté pour activer ce rôle :
+`supabase/migrations/20260814000000_add_coach_role.sql`. Appliquez-le comme
+les précédents (SQL Editor ou `supabase db push`).
+
+## 13. Démarrage local
 
 ```bash
 npm install
 npm run dev
 ```
 
-## 13. Build de production
+## 14. Build de production
 
 ```bash
 npm run build

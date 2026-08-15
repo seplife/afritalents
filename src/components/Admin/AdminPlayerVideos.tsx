@@ -22,7 +22,7 @@ export function AdminPlayerVideos({ player, onBack, onNotice }: { player: DbPlay
 
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    if (!isAdminOrAcademy) return onNotice('Seuls les administrateurs et académies peuvent ajouter des vidéos.');
+    if (!isAdminOrAcademy) return onNotice('Seuls les administrateurs, académies et coachs peuvent ajouter des vidéos.');
     setUploading(true);
     for (const file of Array.from(files)) {
       const path = `${player.id}/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;

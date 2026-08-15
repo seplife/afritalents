@@ -1,4 +1,4 @@
-export type AppRole = 'admin' | 'academy' | 'scout';
+export type AppRole = 'admin' | 'academy' | 'coach' | 'scout';
 
 export type Profile = {
   id: string;
